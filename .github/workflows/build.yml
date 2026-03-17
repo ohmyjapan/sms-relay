@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sms-relay-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create/Update rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "SMS Relay (Latest Build)"
+          body: |
+            Latest debug APK — built from commit ${{ github.sha }}
+
+            **Install on phone:**
+            1. Open the APK link below on your phone
+            2. Download → Open → Install
+          files: app/build/outputs/apk/debug/app-debug.apk
+          prerelease: true
+          make_latest: true
