@@ -42,12 +42,14 @@ class SmsReceiver : BroadcastReceiver() {
     private fun enqueueRelay(context: Context, body: String, sender: String, rule: TriggerRule) {
         val timestamp = System.currentTimeMillis()
 
-        // Log the entry immediately as "retrying"
-        val snippet = if (sender.length > 20) sender.substring(0, 20) else sender
+        // Show label in log if available, otherwise phone number
+        val displaySender = if (rule.label.isNotEmpty()) rule.label else sender
+        val snippet = if (displaySender.length > 20) displaySender.substring(0, 20) else displaySender
+
         RelayLog.addEntry(context, LogEntry(
             timestamp = timestamp,
             sender = snippet,
-            bodySnippet = if (body.length > 50) body.substring(0, 50) + "…" else body,
+            bodySnippet = if (body.length > 50) body.substring(0, 50) + "..." else body,
             matchedRule = "${rule.type}:${rule.pattern}",
             status = "retrying"
         ))
@@ -57,6 +59,7 @@ class SmsReceiver : BroadcastReceiver() {
             "sender" to sender,
             "timestamp" to timestamp,
             "matched_rule" to "${rule.type}:${rule.pattern}",
+            "label" to rule.label,
             "server_url" to Prefs.getServerUrl(context)
         )
 

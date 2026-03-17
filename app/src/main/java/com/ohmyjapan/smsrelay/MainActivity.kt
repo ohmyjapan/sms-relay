@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,6 +43,25 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PERMISSION_REQUEST = 100
     }
+
+    data class BankPreset(val name: String, val number: String, val label: String)
+
+    private val bankPresets = listOf(
+        BankPreset("-- Select preset --", "", ""),
+        BankPreset("KB국민 (15881688)", "15881688", "KB입금"),
+        BankPreset("KB국민 (15999999)", "15999999", "KB입금"),
+        BankPreset("우리은행 (15881111)", "15881111", "우리입금"),
+        BankPreset("우리은행 (15880079)", "15880079", "우리입금"),
+        BankPreset("신한은행 (15448000)", "15448000", "신한입금"),
+        BankPreset("신한은행 (15778000)", "15778000", "신한입금"),
+        BankPreset("NH농협 (15442100)", "15442100", "NH입금"),
+        BankPreset("NH농협 (15441111)", "15441111", "NH입금"),
+        BankPreset("하나은행 (15991111)", "15991111", "하나입금"),
+    )
+
+    private val labelOptions = listOf(
+        "KB입금", "우리입금", "하나입금", "신한입금", "NH입금", "기타", "Custom..."
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,7 +134,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshLog()
-        // Auto-refresh log every 5 seconds
         refreshJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive) {
                 delay(5000)
@@ -150,15 +169,58 @@ class MainActivity : AppCompatActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_trigger, null)
         val typeSpinner = view.findViewById<Spinner>(R.id.typeSpinner)
         val patternEdit = view.findViewById<EditText>(R.id.patternEdit)
+        val presetSpinner = view.findViewById<Spinner>(R.id.presetSpinner)
+        val presetLabel = view.findViewById<TextView>(R.id.presetLabel)
+        val labelSpinner = view.findViewById<Spinner>(R.id.labelSpinner)
+        val customLabelEdit = view.findViewById<EditText>(R.id.customLabelEdit)
 
-        val types = arrayOf("Body contains", "Sender contains", "All SMS")
+        // Type: phone number first
+        val types = arrayOf("Phone number", "Body contains", "Sender contains", "All SMS")
         typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, types)
 
-        typeSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                patternEdit.visibility = if (pos == 2) View.GONE else View.VISIBLE
+        // Bank presets
+        presetSpinner.adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_dropdown_item,
+            bankPresets.map { it.name })
+
+        presetSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                if (pos > 0) {
+                    patternEdit.setText(bankPresets[pos].number)
+                    val labelIdx = labelOptions.indexOf(bankPresets[pos].label)
+                    if (labelIdx >= 0) labelSpinner.setSelection(labelIdx)
+                }
             }
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        // Labels
+        labelSpinner.adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_dropdown_item, labelOptions)
+
+        labelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                customLabelEdit.visibility =
+                    if (labelOptions[pos] == "Custom...") View.VISIBLE else View.GONE
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        // Show/hide fields based on type
+        typeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val isPhone = pos == 0
+                val isAll = pos == 3
+                presetSpinner.visibility = if (isPhone) View.VISIBLE else View.GONE
+                presetLabel.visibility = if (isPhone) View.VISIBLE else View.GONE
+                patternEdit.visibility = if (isAll) View.GONE else View.VISIBLE
+                patternEdit.inputType = if (isPhone)
+                    InputType.TYPE_CLASS_PHONE
+                else
+                    InputType.TYPE_CLASS_TEXT
+                patternEdit.hint = if (isPhone) "Phone number (e.g. 15881688)" else "Pattern (e.g. [KB])"
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
         }
 
         AlertDialog.Builder(this)
@@ -166,13 +228,19 @@ class MainActivity : AppCompatActivity() {
             .setView(view)
             .setPositiveButton("Add") { _, _ ->
                 val typeStr = when (typeSpinner.selectedItemPosition) {
-                    0 -> "body_contains"
-                    1 -> "sender_contains"
+                    0 -> "sender_exact"
+                    1 -> "body_contains"
+                    2 -> "sender_contains"
                     else -> "all"
                 }
                 val pattern = if (typeStr == "all") "*" else patternEdit.text.toString().trim()
+                val label = if (labelOptions[labelSpinner.selectedItemPosition] == "Custom...")
+                    customLabelEdit.text.toString().trim()
+                else
+                    labelOptions[labelSpinner.selectedItemPosition]
+
                 if (typeStr == "all" || pattern.isNotEmpty()) {
-                    triggers.add(TriggerRule(typeStr, pattern, true))
+                    triggers.add(TriggerRule(typeStr, pattern, true, label))
                     triggerAdapter.notifyItemInserted(triggers.size - 1)
                     saveTriggers()
                 }
@@ -215,7 +283,6 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, RelayService::class.java)
             ContextCompat.startForegroundService(this, intent)
         } catch (e: Exception) {
-            // Service may fail on some Android versions, SMS relay still works via WorkManager
             Toast.makeText(this, "Background service failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
@@ -294,6 +361,7 @@ class MainActivity : AppCompatActivity() {
         class VH(view: View) : RecyclerView.ViewHolder(view) {
             val time: TextView = view.findViewById(R.id.logTime)
             val sender: TextView = view.findViewById(R.id.logSender)
+            val body: TextView = view.findViewById(R.id.logBody)
             val status: TextView = view.findViewById(R.id.logStatus)
         }
 
@@ -306,6 +374,7 @@ class MainActivity : AppCompatActivity() {
             val entry = items[position]
             holder.time.text = dateFormat.format(Date(entry.timestamp))
             holder.sender.text = entry.sender
+            holder.body.text = entry.bodySnippet
             holder.status.text = when (entry.status) {
                 "delivered" -> "✓"
                 "retrying" -> "⏳ (${entry.attempts})"

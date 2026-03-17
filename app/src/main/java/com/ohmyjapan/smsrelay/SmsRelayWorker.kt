@@ -55,6 +55,7 @@ class SmsRelayWorker(
         val sender = inputData.getString("sender") ?: return@withContext Result.failure()
         val timestamp = inputData.getLong("timestamp", 0)
         val matchedRule = inputData.getString("matched_rule") ?: ""
+        val label = inputData.getString("label") ?: ""
         val serverUrl = inputData.getString("server_url") ?: return@withContext Result.failure()
 
         if (runAttemptCount >= MAX_ATTEMPTS) {
@@ -73,7 +74,8 @@ class SmsRelayWorker(
             "from" to sender,
             "timestamp" to timestamp,
             "source" to "sms-relay",
-            "matchedRule" to matchedRule
+            "matchedRule" to matchedRule,
+            "label" to label
         )
 
         val json = Gson().toJson(payload)

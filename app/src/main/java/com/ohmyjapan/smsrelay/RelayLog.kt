@@ -20,7 +20,7 @@ object RelayLog {
     private const val KEY_TODAY_DATE = "today_date"
     private const val KEY_RETRY_COUNT = "retry_count"
     private const val KEY_FAIL_COUNT = "fail_count"
-    private const val MAX_ENTRIES = 20
+    private const val MAX_ENTRIES = 50
 
     private val gson = Gson()
 

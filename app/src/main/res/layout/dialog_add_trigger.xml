@@ -16,14 +16,52 @@
         android:id="@+id/typeSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/presetLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quick add bank:"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/presetSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp" />
 
     <EditText
         android:id="@+id/patternEdit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Pattern (e.g. [KB], 1588)"
+        android:hint="Phone number (e.g. 15881688)"
+        android:inputType="phone"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Label"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/labelSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/customLabelEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Custom label..."
         android:inputType="text"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:visibility="gone" />
 
 </LinearLayout>

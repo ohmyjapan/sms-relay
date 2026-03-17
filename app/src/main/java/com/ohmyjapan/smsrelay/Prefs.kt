@@ -10,6 +10,8 @@ object Prefs {
     private const val KEY_URL = "server_url"
     private const val KEY_TRIGGERS = "trigger_rules"
     private const val KEY_ENABLED = "relay_enabled"
+    private const val KEY_TRIGGER_VERSION = "trigger_version"
+    private const val CURRENT_TRIGGER_VERSION = 2
 
     private val gson = Gson()
 
@@ -31,7 +33,17 @@ object Prefs {
     }
 
     fun getTriggerRules(ctx: Context): MutableList<TriggerRule> {
-        val json = prefs(ctx).getString(KEY_TRIGGERS, null) ?: return getDefaultRules()
+        val version = prefs(ctx).getInt(KEY_TRIGGER_VERSION, 0)
+        val json = prefs(ctx).getString(KEY_TRIGGERS, null)
+
+        // Fresh install or version upgrade: use new defaults
+        if (json == null || version < CURRENT_TRIGGER_VERSION) {
+            val defaults = getDefaultRules()
+            setTriggerRules(ctx, defaults)
+            prefs(ctx).edit().putInt(KEY_TRIGGER_VERSION, CURRENT_TRIGGER_VERSION).apply()
+            return defaults
+        }
+
         return try {
             val type = object : TypeToken<MutableList<TriggerRule>>() {}.type
             gson.fromJson(json, type)
@@ -45,10 +57,10 @@ object Prefs {
     }
 
     private fun getDefaultRules(): MutableList<TriggerRule> = mutableListOf(
-        TriggerRule("body_contains", "[KB]", true),
-        TriggerRule("body_contains", "[우리]", true),
-        TriggerRule("body_contains", "[하나]", true),
-        TriggerRule("body_contains", "[신한]", true),
-        TriggerRule("body_contains", "[NH]", true),
+        TriggerRule("sender_exact", "15881688", true, "KB입금"),
+        TriggerRule("sender_exact", "15999999", true, "KB입금"),
+        TriggerRule("sender_exact", "15881111", true, "우리입금"),
+        TriggerRule("sender_exact", "15448000", true, "신한입금"),
+        TriggerRule("sender_exact", "15442100", true, "NH입금"),
     )
 }
