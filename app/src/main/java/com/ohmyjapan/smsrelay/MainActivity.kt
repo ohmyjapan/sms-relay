@@ -208,8 +208,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRelayService() {
-        val intent = Intent(this, RelayService::class.java)
-        ContextCompat.startForegroundService(this, intent)
+        try {
+            val intent = Intent(this, RelayService::class.java)
+            ContextCompat.startForegroundService(this, intent)
+        } catch (e: Exception) {
+            // Service may fail on some Android versions, SMS relay still works via WorkManager
+            Toast.makeText(this, "Background service failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun stopRelayService() {
