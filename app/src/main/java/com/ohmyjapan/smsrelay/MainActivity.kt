@@ -71,7 +71,8 @@ class MainActivity : AppCompatActivity() {
         val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
             override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {
-                val pos = vh.adapterPosition
+                val pos = vh.bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return
                 triggers.removeAt(pos)
                 triggerAdapter.notifyItemRemoved(pos)
                 saveTriggers()
@@ -194,9 +195,11 @@ class MainActivity : AppCompatActivity() {
                     .build()
                 val request = Request.Builder().url(url).head().build()
                 val response = client.newCall(request).execute()
+                val code = response.code
+                response.close()
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@MainActivity,
-                        "Connected! Status: ${response.code}", Toast.LENGTH_SHORT).show()
+                        "Connected! Status: $code", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

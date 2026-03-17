@@ -71,6 +71,10 @@ class SmsReceiver : BroadcastReceiver() {
             )
             .build()
 
-        WorkManager.getInstance(context).enqueue(request)
+        try {
+            WorkManager.getInstance(context).enqueue(request)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to enqueue relay work: ${e.message}")
+        }
     }
 }
