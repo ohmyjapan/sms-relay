@@ -23,8 +23,25 @@ jobs:
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
 
+      - name: Restore or create debug keystore
+        id: keystore
+        uses: actions/cache@v4
+        with:
+          path: app/debug.keystore
+          key: debug-keystore-v1
+
+      - name: Create debug keystore if not cached
+        if: steps.keystore.outputs.cache-hit != 'true'
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=SMS Relay, OU=OhMyJapan, O=OhMyJapan, L=Tokyo, S=Tokyo, C=JP"
+
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug -Pandroid.injected.signing.store.file=$PWD/app/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
