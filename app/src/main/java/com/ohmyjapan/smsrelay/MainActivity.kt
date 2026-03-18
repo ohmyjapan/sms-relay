@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
 
         // Triggers
         triggers.addAll(Prefs.getTriggerRules(this))
-        triggerAdapter = TriggerAdapter(triggers) { saveTriggers() }
+        triggerAdapter = TriggerAdapter(triggers, { saveTriggers() }, { pos -> showEditTriggerDialog(pos) })
         triggerRecycler.layoutManager = LinearLayoutManager(this)
         triggerRecycler.adapter = triggerAdapter
 
@@ -249,6 +249,112 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun showEditTriggerDialog(position: Int) {
+        val rule = triggers[position]
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_trigger, null)
+        val typeSpinner = view.findViewById<Spinner>(R.id.typeSpinner)
+        val patternEdit = view.findViewById<EditText>(R.id.patternEdit)
+        val presetSpinner = view.findViewById<Spinner>(R.id.presetSpinner)
+        val presetLabel = view.findViewById<TextView>(R.id.presetLabel)
+        val labelSpinner = view.findViewById<Spinner>(R.id.labelSpinner)
+        val customLabelEdit = view.findViewById<EditText>(R.id.customLabelEdit)
+
+        val types = arrayOf("Phone number", "Body contains", "Sender contains", "All SMS")
+        typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, types)
+
+        // Set current type
+        val typeIdx = when (rule.type) {
+            "sender_exact" -> 0
+            "body_contains" -> 1
+            "sender_contains" -> 2
+            "all" -> 3
+            else -> 0
+        }
+        typeSpinner.setSelection(typeIdx)
+
+        // Pattern
+        patternEdit.setText(rule.pattern)
+
+        // Presets
+        presetSpinner.adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_dropdown_item,
+            bankPresets.map { it.name })
+
+        presetSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                if (pos > 0) {
+                    patternEdit.setText(bankPresets[pos].number)
+                    val lblIdx = labelOptions.indexOf(bankPresets[pos].label)
+                    if (lblIdx >= 0) labelSpinner.setSelection(lblIdx)
+                }
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        // Labels
+        labelSpinner.adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_dropdown_item, labelOptions)
+
+        // Set current label
+        val lblIdx = labelOptions.indexOf(rule.label)
+        if (lblIdx >= 0) {
+            labelSpinner.setSelection(lblIdx)
+        } else if (rule.label.isNotEmpty()) {
+            labelSpinner.setSelection(labelOptions.indexOf("Custom..."))
+            customLabelEdit.setText(rule.label)
+            customLabelEdit.visibility = View.VISIBLE
+        }
+
+        labelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                customLabelEdit.visibility =
+                    if (labelOptions[pos] == "Custom...") View.VISIBLE else View.GONE
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        typeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val isPhone = pos == 0
+                val isAll = pos == 3
+                presetSpinner.visibility = if (isPhone) View.VISIBLE else View.GONE
+                presetLabel.visibility = if (isPhone) View.VISIBLE else View.GONE
+                patternEdit.visibility = if (isAll) View.GONE else View.VISIBLE
+                patternEdit.inputType = if (isPhone)
+                    InputType.TYPE_CLASS_PHONE
+                else
+                    InputType.TYPE_CLASS_TEXT
+                patternEdit.hint = if (isPhone) "Phone number (e.g. 15881688)" else "Pattern (e.g. [KB])"
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Trigger Rule")
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                val typeStr = when (typeSpinner.selectedItemPosition) {
+                    0 -> "sender_exact"
+                    1 -> "body_contains"
+                    2 -> "sender_contains"
+                    else -> "all"
+                }
+                val pattern = if (typeStr == "all") "*" else patternEdit.text.toString().trim()
+                val label = if (labelOptions[labelSpinner.selectedItemPosition] == "Custom...")
+                    customLabelEdit.text.toString().trim()
+                else
+                    labelOptions[labelSpinner.selectedItemPosition]
+
+                if (typeStr == "all" || pattern.isNotEmpty()) {
+                    triggers[position] = TriggerRule(typeStr, pattern, rule.enabled, label)
+                    triggerAdapter.notifyItemChanged(position)
+                    saveTriggers()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun testConnection() {
         val url = urlEdit.text.toString().trim()
         if (url.isEmpty()) {
@@ -325,7 +431,8 @@ class MainActivity : AppCompatActivity() {
 
     class TriggerAdapter(
         private val items: MutableList<TriggerRule>,
-        private val onChanged: () -> Unit
+        private val onChanged: () -> Unit,
+        private val onEdit: (Int) -> Unit = {}
     ) : RecyclerView.Adapter<TriggerAdapter.VH>() {
 
         class VH(view: View) : RecyclerView.ViewHolder(view) {
@@ -346,6 +453,10 @@ class MainActivity : AppCompatActivity() {
             holder.toggle.setOnCheckedChangeListener { _, checked ->
                 rule.enabled = checked
                 onChanged()
+            }
+            holder.itemView.setOnClickListener {
+                val pos = holder.bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onEdit(pos)
             }
         }
 

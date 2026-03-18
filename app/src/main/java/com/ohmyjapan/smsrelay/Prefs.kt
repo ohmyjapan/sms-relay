@@ -11,7 +11,7 @@ object Prefs {
     private const val KEY_TRIGGERS = "trigger_rules"
     private const val KEY_ENABLED = "relay_enabled"
     private const val KEY_TRIGGER_VERSION = "trigger_version"
-    private const val CURRENT_TRIGGER_VERSION = 2
+    private const val CURRENT_TRIGGER_VERSION = 3
 
     private val gson = Gson()
 
@@ -57,10 +57,6 @@ object Prefs {
     }
 
     private fun getDefaultRules(): MutableList<TriggerRule> = mutableListOf(
-        TriggerRule("sender_exact", "15881688", true, "KB입금"),
-        TriggerRule("sender_exact", "15999999", true, "KB입금"),
-        TriggerRule("sender_exact", "15881111", true, "우리입금"),
-        TriggerRule("sender_exact", "15448000", true, "신한입금"),
-        TriggerRule("sender_exact", "15442100", true, "NH입금"),
+        TriggerRule("sender_exact", "16449999", true, "KB입금"),
     )
 }
