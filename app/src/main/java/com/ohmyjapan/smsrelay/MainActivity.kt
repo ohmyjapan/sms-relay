@@ -129,6 +129,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateStats()
+
+        // Auto-update check
+        val updateBtn = findViewById<Button>(R.id.updateBtn)
+        val updater = AppUpdater(this)
+        updater.checkAndPrompt { available, _ ->
+            if (available) {
+                updateBtn.visibility = View.VISIBLE
+                updateBtn.text = "Update available — tap to install"
+                updateBtn.setOnClickListener {
+                    updateBtn.isEnabled = false
+                    updater.downloadAndInstall { status ->
+                        updateBtn.text = status
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {

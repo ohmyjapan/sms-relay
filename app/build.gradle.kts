@@ -11,8 +11,18 @@ android {
         applicationId = "com.ohmyjapan.smsrelay"
         minSdk = 29
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = providers.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+        }.standardOutput.asText.get().trim().toIntOrNull() ?: 1
+        versionName = providers.exec {
+            commandLine("git", "rev-parse", "--short", "HEAD")
+        }.standardOutput.asText.get().trim()
+
+        buildConfigField("int", "VERSION_CODE_INT", "$versionCode")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

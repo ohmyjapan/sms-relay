@@ -34,6 +34,16 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
+        <!-- Update Button -->
+        <Button
+            android:id="@+id/updateBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Check for updates"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
         <!-- Server URL Section -->
         <TextView
             android:layout_width="wrap_content"
