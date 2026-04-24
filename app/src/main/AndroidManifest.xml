@@ -42,7 +42,8 @@
 
         <service
             android:name=".RelayService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
