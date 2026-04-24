@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMS Relay 설정 가이드</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 16px; max-width: 480px; margin: 0 auto; }
+h1 { font-size: 22px; color: #fff; margin-bottom: 8px; }
+.subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+.step { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 16px; border-left: 3px solid #444; }
+.step.active { border-left-color: #4CAF50; }
+.step-num { display: inline-block; background: #333; color: #fff; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-size: 14px; font-weight: 700; margin-right: 8px; }
+.step.active .step-num { background: #4CAF50; }
+.step-title { display: inline; font-size: 16px; font-weight: 600; color: #fff; }
+.step-body { margin-top: 10px; font-size: 14px; line-height: 1.6; color: #bbb; }
+.step-body a { color: #64B5F6; text-decoration: none; word-break: break-all; }
+.mock { background: #121212; border-radius: 8px; margin-top: 12px; padding: 12px; border: 1px solid #2a2a2a; }
+.mock-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+.mock-input { background: #1e1e1e; border: 1px solid #333; border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 13px; width: 100%; margin-bottom: 6px; }
+.mock-input.placeholder { color: #555; }
+.mock-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.mock-row .label { font-size: 13px; color: #ccc; min-width: 45px; }
+.mock-btn { background: #2a2a2a; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; }
+.mock-btn.primary { background: #4CAF50; }
+.mock-btn.mercari { background: #E53935; color: #fff; }
+.mock-switch { display: flex; align-items: center; justify-content: space-between; }
+.switch-track { width: 44px; height: 24px; background: #4CAF50; border-radius: 12px; position: relative; }
+.switch-thumb { width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px; }
+.highlight { background: #4CAF50; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.warning { background: #1a1400; border: 1px solid #FF9800; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 13px; color: #FFB74D; }
+.divider { border: none; border-top: 1px solid #222; margin: 20px 0; }
+.note { font-size: 12px; color: #666; font-style: italic; }
+.arrow { color: #4CAF50; margin: 0 4px; }
+.tag { display: inline-block; background: #2a2a2a; color: #aaa; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+.section-title { font-size: 13px; color: #888; margin-bottom: 8px; margin-top: 16px; text-transform: uppercase; letter-spacing: 1px; }
+.check { color: #4CAF50; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<h1>SMS Relay 설정 가이드</h1>
+<p class="subtitle">메르카리 SMS 인증번호 자동 전달 설정</p>
+
+<!-- STEP 0: Tailscale -->
+<div class="step active">
+  <span class="step-num">0</span>
+  <span class="step-title">Tailscale 설치 및 연결</span>
+  <div class="step-body">
+    <p>Play Store에서 <strong>Tailscale</strong> 앱을 설치하세요.</p>
+    <p style="margin-top:8px;">설치 후 브라우저에서 아래 링크를 열어주세요:</p>
+    <div class="mock">
+      <div class="mock-label">브라우저에 입력</div>
+      <code style="color:#64B5F6;font-size:12px;word-break:break-all;">https://login.tailscale.com/auth/key?key=YOUR_AUTH_KEY</code>
+    </div>
+    <p style="margin-top:8px;font-size:12px;color:#888;">* 실제 auth key는 별도로 전달받은 것을 사용하세요</p>
+    <p style="margin-top:8px;">연결 완료 후 Tailscale 앱에 <span class="highlight">Connected</span> 표시 확인</p>
+  </div>
+</div>
+
+<!-- STEP 1: Install -->
+<div class="step active">
+  <span class="step-num">1</span>
+  <span class="step-title">SMS Relay 앱 설치</span>
+  <div class="step-body">
+    <p>아래 링크를 폰 브라우저에서 열어 APK를 다운로드하세요:</p>
+    <p style="margin-top:6px;"><a href="https://github.com/ohmyjapan/sms-relay/releases/download/latest/app-debug.apk">github.com/.../app-debug.apk</a></p>
+    <p style="margin-top:8px;">다운로드 완료 후<span class="arrow">→</span>파일 열기<span class="arrow">→</span>설치</p>
+    <div class="warning">
+      "출처를 알 수 없는 앱" 경고가 뜨면 <strong>허용</strong>을 눌러주세요.
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: Permissions -->
+<div class="step active">
+  <span class="step-num">2</span>
+  <span class="step-title">권한 허용</span>
+  <div class="step-body">
+    <p>앱을 처음 열면 아래 권한을 요청합니다. <strong>모두 허용</strong>해 주세요:</p>
+    <div style="margin-top:8px;">
+      <p><span class="check">&#10003;</span> SMS 수신 (RECEIVE_SMS)</p>
+      <p><span class="check">&#10003;</span> SMS 읽기 (READ_SMS)</p>
+      <p><span class="check">&#10003;</span> 전화 상태 (READ_PHONE_STATE) — SIM 구분용</p>
+      <p><span class="check">&#10003;</span> 알림 (POST_NOTIFICATIONS)</p>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3: App Overview -->
+<div class="step">
+  <span class="step-num">3</span>
+  <span class="step-title">앱 화면 구성</span>
+  <div class="step-body">
+    <p>앱을 열면 아래와 같은 화면이 보입니다:</p>
+    <div class="mock">
+      <!-- Master switch -->
+      <div class="mock-switch" style="margin-bottom:12px;">
+        <span style="font-size:18px;font-weight:700;color:#fff;">SMS Relay</span>
+        <div class="switch-track"><div class="switch-thumb"></div></div>
+      </div>
+
+      <!-- Server URL -->
+      <div class="mock-label">Server URL</div>
+      <div class="mock-input" style="color:#888;font-size:11px;">http://100.79.23.111:3100/api/bank/transfer</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <div class="mock-btn" style="flex:1;text-align:center;">Save</div>
+        <div class="mock-btn" style="flex:1;text-align:center;">Test</div>
+      </div>
+
+      <!-- SIM Labels -->
+      <div class="mock-label" style="color:#FF9800;">SIM Labels (dual-SIM) ← 설정 필요</div>
+      <div class="mock-row">
+        <span class="label">SIM 1:</span>
+        <div class="mock-input placeholder" style="flex:1;margin:0;">e.g. saruwa2</div>
+        <div class="mock-btn">Save</div>
+      </div>
+      <div class="mock-row">
+        <span class="label">SIM 2:</span>
+        <div class="mock-input placeholder" style="flex:1;margin:0;">e.g. johnleeknb</div>
+        <div class="mock-btn">Save</div>
+      </div>
+
+      <div style="border-top:1px solid #333;margin:10px 0;"></div>
+
+      <!-- Trigger Rules -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="mock-label" style="margin:0;">Trigger Rules</div>
+        <div style="width:28px;height:28px;background:#333;border-radius:50%;text-align:center;line-height:28px;font-size:16px;">+</div>
+      </div>
+      <div style="font-size:10px;color:#555;margin-top:4px;">← Swipe left to delete</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4: SIM Labels -->
+<div class="step active">
+  <span class="step-num">4</span>
+  <span class="step-title">SIM 라벨 설정</span>
+  <div class="step-body">
+    <p><strong>듀얼 SIM 폰만</strong> 해당됩니다. SIM이 1개인 폰은 건너뛰세요.</p>
+    <p style="margin-top:8px;">각 SIM 슬롯에 해당하는 메르카리 계정명을 입력하세요:</p>
+    <div class="mock">
+      <div class="mock-label">SIM Labels (dual-SIM)</div>
+      <div class="mock-row">
+        <span class="label">SIM 1:</span>
+        <div class="mock-input" style="flex:1;margin:0;color:#4CAF50;">saruwa2</div>
+        <div class="mock-btn primary">Save</div>
+      </div>
+      <div class="mock-row">
+        <span class="label">SIM 2:</span>
+        <div class="mock-input" style="flex:1;margin:0;color:#4CAF50;">johnleeknb</div>
+        <div class="mock-btn primary">Save</div>
+      </div>
+    </div>
+    <p style="margin-top:8px;font-size:12px;color:#888;">* 계정명은 별도로 전달받은 것을 입력하세요</p>
+    <p style="margin-top:4px;font-size:12px;color:#888;">* 각각 입력 후 <strong>Save</strong> 버튼을 꼭 눌러주세요</p>
+  </div>
+</div>
+
+<!-- STEP 5: Add Trigger -->
+<div class="step active">
+  <span class="step-num">5</span>
+  <span class="step-title">메르카리 트리거 추가</span>
+  <div class="step-body">
+    <p><strong>+</strong> 버튼을 누르면 아래와 같은 화면이 나옵니다:</p>
+    <div class="mock">
+      <div class="mock-label">Add Trigger Rule</div>
+
+      <div class="mock-label" style="margin-top:8px;">Type</div>
+      <div class="mock-input">Body contains</div>
+
+      <div class="mock-label">Pattern</div>
+      <div class="mock-input">認証番号</div>
+
+      <div class="mock-label">Label</div>
+      <div class="mock-input placeholder">Custom...</div>
+
+      <div class="mock-label">URL (per-rule override)</div>
+      <div class="mock-input" style="font-size:11px;">http://100.79.23.111:3000/api/sms/otp</div>
+
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <div class="mock-btn" style="flex:1;text-align:center;">Cancel</div>
+        <div class="mock-btn mercari" style="flex:1;text-align:center;font-weight:700;">Mercari OTP</div>
+        <div class="mock-btn primary" style="flex:1;text-align:center;">Add</div>
+      </div>
+    </div>
+    <p style="margin-top:10px;">가장 쉬운 방법: 다이얼로그 하단의 <span style="background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">Mercari OTP</span> 버튼을 누르면 자동으로 추가됩니다.</p>
+    <div class="warning">
+      SIM이 1개인 폰은 Label에 계정명(예: saruwa2)을 직접 입력한 후 <strong>Add</strong>를 눌러주세요.
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6: Turn On -->
+<div class="step active">
+  <span class="step-num">6</span>
+  <span class="step-title">스위치 켜기</span>
+  <div class="step-body">
+    <p>상단의 마스터 스위치를 <strong>ON</strong>으로 전환하세요:</p>
+    <div class="mock">
+      <div class="mock-switch">
+        <span style="font-size:18px;font-weight:700;color:#fff;">SMS Relay</span>
+        <div class="switch-track"><div class="switch-thumb"></div></div>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:#4CAF50;">Listening — 2 rules active</p>
+    </div>
+    <p style="margin-top:10px;">상단 알림바에 <strong>"SMS Relay — Listening"</strong> 알림이 표시되면 정상 작동 중입니다.</p>
+  </div>
+</div>
+
+<!-- STEP 7: Verify -->
+<div class="step">
+  <span class="step-num">7</span>
+  <span class="step-title">동작 확인</span>
+  <div class="step-body">
+    <p>앱 하단의 <strong>Recent Activity</strong> 섹션에서 전달 상태를 확인할 수 있습니다:</p>
+    <div class="mock">
+      <div class="mock-label">Recent Activity</div>
+      <p style="font-size:11px;color:#888;">Today: 0 forwarded | 0 retries | 0 failed</p>
+      <div style="margin-top:8px;padding:6px;background:#1e1e1e;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="font-size:12px;color:#aaa;">14:32:01</span>
+          <span style="font-size:12px;color:#fff;margin-left:6px;">saruwa2</span>
+          <p style="font-size:11px;color:#666;margin-top:2px;">[購入手続き] 認証番号：123456...</p>
+        </div>
+        <span style="color:#4CAF50;font-size:14px;">&#10003;</span>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <p><span style="color:#4CAF50;">&#10003;</span> = 전달 완료</p>
+      <p><span style="color:#FF9800;">&#9203;</span> = 재시도 중 (최대 10회)</p>
+      <p><span style="color:#F44336;">&#10007;</span> = 실패</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<p class="section-title">참고사항</p>
+<div style="font-size:13px;color:#888;line-height:1.8;">
+  <p>&#8226; 기존 MacroDroid 설정은 그대로 유지하세요 (백업용)</p>
+  <p>&#8226; 앱이 종료되어도 SMS 수신은 계속 동작합니다</p>
+  <p>&#8226; 배터리 최적화에서 SMS Relay를 제외해 주세요</p>
+  <p>&#8226; Tailscale은 항상 연결 상태를 유지해야 합니다</p>
+  <p>&#8226; 문제 발생 시 앱 내 로그를 캡처해서 보내주세요</p>
+</div>
+
+<div style="margin-top:24px;padding:12px;background:#1a1a2e;border-radius:8px;text-align:center;">
+  <p style="font-size:11px;color:#555;">Oh My Japan LLC &mdash; SMS Relay v4</p>
+</div>
+
+</body>
+</html>
