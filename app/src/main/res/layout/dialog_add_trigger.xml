@@ -64,4 +64,20 @@
         android:padding="12dp"
         android:visibility="gone" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="URL (per-rule override)"
+        android:textSize="14sp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/urlEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="URL (empty = global)"
+        android:inputType="textUri"
+        android:padding="12dp" />
+
 </LinearLayout>

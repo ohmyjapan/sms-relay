@@ -11,7 +11,9 @@ object Prefs {
     private const val KEY_TRIGGERS = "trigger_rules"
     private const val KEY_ENABLED = "relay_enabled"
     private const val KEY_TRIGGER_VERSION = "trigger_version"
-    private const val CURRENT_TRIGGER_VERSION = 3
+    private const val CURRENT_TRIGGER_VERSION = 4
+    private const val KEY_SIM_LABEL_1 = "sim_label_1"
+    private const val KEY_SIM_LABEL_2 = "sim_label_2"
 
     private val gson = Gson()
 
@@ -54,6 +56,15 @@ object Prefs {
 
     fun setTriggerRules(ctx: Context, rules: List<TriggerRule>) {
         prefs(ctx).edit().putString(KEY_TRIGGERS, gson.toJson(rules)).apply()
+    }
+
+    fun getSimLabel(ctx: Context, simSlot: Int): String =
+        prefs(ctx).getString(if (simSlot == 1) KEY_SIM_LABEL_1 else KEY_SIM_LABEL_2, "") ?: ""
+
+    fun setSimLabel(ctx: Context, simSlot: Int, label: String) {
+        prefs(ctx).edit().putString(
+            if (simSlot == 1) KEY_SIM_LABEL_1 else KEY_SIM_LABEL_2, label
+        ).apply()
     }
 
     private fun getDefaultRules(): MutableList<TriggerRule> = mutableListOf(

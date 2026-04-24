@@ -56,7 +56,8 @@ class SmsRelayWorker(
         val timestamp = inputData.getLong("timestamp", 0)
         val matchedRule = inputData.getString("matched_rule") ?: ""
         val label = inputData.getString("label") ?: ""
-        val serverUrl = inputData.getString("server_url") ?: return@withContext Result.failure()
+        val ruleUrl = inputData.getString("rule_url")
+        val serverUrl = if (!ruleUrl.isNullOrEmpty()) ruleUrl else inputData.getString("server_url") ?: return@withContext Result.failure()
 
         if (runAttemptCount >= MAX_ATTEMPTS) {
             Log.e(TAG, "Max attempts ($MAX_ATTEMPTS) reached for SMS from $sender")

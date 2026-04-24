@@ -4,7 +4,8 @@ data class TriggerRule(
     val type: String,    // "sender_exact", "body_contains", "sender_contains", "all"
     val pattern: String,
     var enabled: Boolean = true,
-    val label: String = ""  // "KB입금", "우리입금", etc.
+    val label: String = "",  // "KB입금", "우리입금", etc.
+    val url: String = ""     // per-rule URL override. Empty = use global URL
 ) {
     fun matches(body: String, sender: String): Boolean {
         if (!enabled) return false

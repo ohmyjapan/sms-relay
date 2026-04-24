@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statsText: TextView
     private lateinit var triggerAdapter: TriggerAdapter
     private lateinit var logAdapter: LogAdapter
+    private lateinit var sim1LabelEdit: EditText
+    private lateinit var sim2LabelEdit: EditText
 
     private val triggers = mutableListOf<TriggerRule>()
     private val logEntries = mutableListOf<LogEntry>()
@@ -80,6 +82,20 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "URL saved", Toast.LENGTH_SHORT).show()
         }
         findViewById<Button>(R.id.testUrlBtn).setOnClickListener { testConnection() }
+
+        // SIM Labels
+        sim1LabelEdit = findViewById(R.id.sim1LabelEdit)
+        sim2LabelEdit = findViewById(R.id.sim2LabelEdit)
+        sim1LabelEdit.setText(Prefs.getSimLabel(this, 1))
+        sim2LabelEdit.setText(Prefs.getSimLabel(this, 2))
+        findViewById<Button>(R.id.saveSim1Btn).setOnClickListener {
+            Prefs.setSimLabel(this, 1, sim1LabelEdit.text.toString().trim())
+            Toast.makeText(this, "SIM 1 label saved", Toast.LENGTH_SHORT).show()
+        }
+        findViewById<Button>(R.id.saveSim2Btn).setOnClickListener {
+            Prefs.setSimLabel(this, 2, sim2LabelEdit.text.toString().trim())
+            Toast.makeText(this, "SIM 2 label saved", Toast.LENGTH_SHORT).show()
+        }
 
         // Triggers
         triggers.addAll(Prefs.getTriggerRules(this))
@@ -181,6 +197,13 @@ class MainActivity : AppCompatActivity() {
         Prefs.setTriggerRules(this, triggers)
     }
 
+    data class QuickPreset(val name: String, val type: String, val pattern: String, val label: String, val url: String)
+
+    private val quickPresets = listOf(
+        QuickPreset("-- Quick presets --", "", "", "", ""),
+        QuickPreset("Mercari OTP (認証番号)", "body_contains", "認証番号", "", "http://100.79.23.111:3000/api/sms/otp"),
+    )
+
     private fun showAddTriggerDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_trigger, null)
         val typeSpinner = view.findViewById<Spinner>(R.id.typeSpinner)
@@ -189,6 +212,7 @@ class MainActivity : AppCompatActivity() {
         val presetLabel = view.findViewById<TextView>(R.id.presetLabel)
         val labelSpinner = view.findViewById<Spinner>(R.id.labelSpinner)
         val customLabelEdit = view.findViewById<EditText>(R.id.customLabelEdit)
+        val ruleUrlEdit = view.findViewById<EditText>(R.id.urlEdit)
 
         // Type: phone number first
         val types = arrayOf("Phone number", "Body contains", "Sender contains", "All SMS")
@@ -254,12 +278,21 @@ class MainActivity : AppCompatActivity() {
                     customLabelEdit.text.toString().trim()
                 else
                     labelOptions[labelSpinner.selectedItemPosition]
+                val ruleUrl = ruleUrlEdit.text.toString().trim()
 
                 if (typeStr == "all" || pattern.isNotEmpty()) {
-                    triggers.add(TriggerRule(typeStr, pattern, true, label))
+                    triggers.add(TriggerRule(typeStr, pattern, true, label, ruleUrl))
                     triggerAdapter.notifyItemInserted(triggers.size - 1)
                     saveTriggers()
                 }
+            }
+            .setNeutralButton("Mercari OTP") { _, _ ->
+                // Quick-add Mercari OTP rule
+                val preset = quickPresets[1]
+                triggers.add(TriggerRule(preset.type, preset.pattern, true, preset.label, preset.url))
+                triggerAdapter.notifyItemInserted(triggers.size - 1)
+                saveTriggers()
+                Toast.makeText(this, "Mercari OTP rule added", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -274,6 +307,7 @@ class MainActivity : AppCompatActivity() {
         val presetLabel = view.findViewById<TextView>(R.id.presetLabel)
         val labelSpinner = view.findViewById<Spinner>(R.id.labelSpinner)
         val customLabelEdit = view.findViewById<EditText>(R.id.customLabelEdit)
+        val ruleUrlEdit = view.findViewById<EditText>(R.id.urlEdit)
 
         val types = arrayOf("Phone number", "Body contains", "Sender contains", "All SMS")
         typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, types)
@@ -290,6 +324,9 @@ class MainActivity : AppCompatActivity() {
 
         // Pattern
         patternEdit.setText(rule.pattern)
+
+        // URL
+        ruleUrlEdit.setText(rule.url)
 
         // Presets
         presetSpinner.adapter = ArrayAdapter(this,
@@ -360,9 +397,10 @@ class MainActivity : AppCompatActivity() {
                     customLabelEdit.text.toString().trim()
                 else
                     labelOptions[labelSpinner.selectedItemPosition]
+                val ruleUrl = ruleUrlEdit.text.toString().trim()
 
                 if (typeStr == "all" || pattern.isNotEmpty()) {
-                    triggers[position] = TriggerRule(typeStr, pattern, rule.enabled, label)
+                    triggers[position] = TriggerRule(typeStr, pattern, rule.enabled, label, ruleUrl)
                     triggerAdapter.notifyItemChanged(position)
                     saveTriggers()
                 }
@@ -420,6 +458,9 @@ class MainActivity : AppCompatActivity() {
         }
         if (checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             perms.add(Manifest.permission.READ_SMS)
+        }
+        if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(Manifest.permission.READ_PHONE_STATE)
         }
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
