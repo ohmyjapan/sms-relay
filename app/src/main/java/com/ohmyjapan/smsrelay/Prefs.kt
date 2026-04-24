@@ -11,7 +11,7 @@ object Prefs {
     private const val KEY_TRIGGERS = "trigger_rules"
     private const val KEY_ENABLED = "relay_enabled"
     private const val KEY_TRIGGER_VERSION = "trigger_version"
-    private const val CURRENT_TRIGGER_VERSION = 4
+    private const val CURRENT_TRIGGER_VERSION = 3
     private const val KEY_SIM_LABEL_1 = "sim_label_1"
     private const val KEY_SIM_LABEL_2 = "sim_label_2"
 
